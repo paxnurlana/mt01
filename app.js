@@ -1,9 +1,22 @@
-document.documentElement.classList.add('js');
-const dev=[['MVP','Базовая версия приложения','Готово','done'],['Meta API','Уточнить разрешения Meta','Требует уточнения','question'],['Ads','Запуск и управление рекламой','Предстоит',''],['Dashboard','Рекламная статистика','Предстоит',''],['CRM','Клиенты и WhatsApp','Предстоит',''],['Analytics','От расходов до выручки','Предстоит',''],['Тестирование','Проверка и исправление ошибок','Предстоит','']];
-document.querySelector('#dev-path').innerHTML=dev.map((d,i)=>`<article class="dev-item reveal ${d[3]}" style="transition-delay:${i*65}ms"><div class="dev-index">${i===0?'✓':String(i+1).padStart(2,'0')}</div><h3>${d[0]}</h3><p>${d[1]}</p><small>${d[2]}</small></article>`).join('');
-document.querySelector('#case-process').innerHTML=['Креативы','Запуск рекламы','Заявки','Продажи','Анализ','Готовый кейс'].map((s,i)=>`<span style="--i:${i}">${s}${i<5?' ↗':''}</span>`).join('');
-const growth=[['Личный блог Бексултана','Публикуем 15 Reels, продвигаем публикации. Продаём курс и подписку, тестируем ролики и офферы.'],['Аккаунт компании','После первых продаж создаём самостоятельный канал: контент, кейсы и реклама от имени компании.'],['Другие креаторы','Подключаем блогеров, маркетологов и контент-креаторов, когда найдём эффективные форматы и офферы.']];
-document.querySelector('#growth-steps').innerHTML=growth.map((s,i)=>`<article class="growth-item reveal"><span class="growth-num">0${i+1}</span><div><h3>${s[0]}</h3><p>${s[1]}</p></div></article>`).join('');
-document.querySelector('#final-roadmap').innerHTML=['Завершить разработку','Подобрать 2–3 бизнеса','Протестировать и создать кейсы','Утвердить тарифы','Снять 15 Reels','Создать мини-курс','Первые продажи и анализ','Запустить аккаунт компании','Подключить креаторов','Масштабировать'].map((s,i)=>`<article class="road-step reveal"><span>${String(i+1).padStart(2,'0')}</span><h3>${s}</h3></article>`).join('');
-const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}}),{threshold:.08});document.querySelectorAll('.reveal').forEach(e=>observer.observe(e));
-let scheduled=false;const progress=()=>{const max=document.documentElement.scrollHeight-innerHeight;document.querySelector('.reading').style.transform=`scaleX(${max>0?scrollY/max:0})`;scheduled=false};addEventListener('scroll',()=>{if(!scheduled){requestAnimationFrame(progress);scheduled=true}},{passive:true});progress();
+const progress=document.querySelector('.progress');
+const plan=document.querySelector('.plan');
+const planSteps=[...plan.querySelectorAll('li')];
+const scenes=[...document.querySelectorAll('.explain-art,.hero-picture,.flow')];
+const stages=[...document.querySelectorAll('.flow-step')];
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let current=0,playing=null,ticking=false;
+function update(){
+ const max=document.documentElement.scrollHeight-innerHeight;
+ progress.style.transform=`scaleX(${max>0?scrollY/max:0})`;
+ let passed=0;
+ planSteps.forEach(el=>{const yes=el.getBoundingClientRect().top<innerHeight*.75;el.classList.toggle('passed',yes);if(yes)passed++;});
+ plan.style.setProperty('--plan-fill',String(passed/planSteps.length));
+ let next=null,best=Infinity;
+ if(!reduced.matches&&!document.hidden)scenes.forEach(el=>{const r=el.getBoundingClientRect();if(r.bottom>72&&r.top<innerHeight){const distance=Math.abs((r.top+r.bottom)/2-innerHeight*.52);if(distance<best){best=distance;next=el;}}});
+ if(next!==playing){if(playing)playing.classList.remove('is-playing');playing=next;if(playing)playing.classList.add('is-playing');}
+ ticking=false;
+}
+function schedule(){if(!ticking){requestAnimationFrame(update);ticking=true;}}
+addEventListener('scroll',schedule,{passive:true});addEventListener('resize',schedule);document.addEventListener('visibilitychange',schedule);reduced.addEventListener('change',schedule);
+setInterval(()=>{if(playing&&playing.classList.contains('flow')&&!reduced.matches){stages[current].classList.remove('active');current=(current+1)%stages.length;stages[current].classList.add('active');}},2200);
+update();
